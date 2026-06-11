@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WM 2026 Tippspiel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            font-size: 0.95rem;
+        }
+
+        /* Navigations-Tabs */
+        .nav-tabs {
+            display: flex;
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: var(--radius);
+            gap: 4px;
+            margin-bottom: 32px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: calc(var(--radius) - 4px);
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* Buttons & Inputs */
+        .btn {
+            padding: 11px 20px;
+            border: none;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background-color 0.2s;
+        }
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn-secondary { background-color: #64748b; }
+        .btn-secondary:hover { background-color: #475569; }
+
+        input[type="text"], input[type="password"], select {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background-color: var(--surface);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--accent); }
+
+        /* Login */
+        .login-box {
+            text-align: center;
+            max-width: 360px;
+            margin: 60px auto;
+        }
+        .login-box input { width: 100%; box-sizing: border-box; margin-bottom: 16px; text-align: center; }
+        .login-box .btn { width: 100%; }
+
+        /* Match Cards */
+        .match-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 16px;
+            background: var(--surface);
+            position: relative;
+            overflow: hidden;
+        }
+        .match-card.locked {
+            background: #fafafa;
+            border-color: #e2e8f0;
+            opacity: 0.85;
+        }
+        .team { font-weight: 600; font-size: 1.05rem; }
+        .team.home { text-align: right; }
+        .team.away { text-align: left; }
+        
+        .match-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .score-inputs { display: flex; align-items: center; gap: 8px; }
+        .score-inputs input {
+            width: 46px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            -moz-appearance: textfield;
+        }
+        .score-inputs input::-webkit-outer-spin-button,
+        .score-inputs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .match-meta { font-size: 0.75rem; color: var(--text-muted); text-align: center; font-weight: 500; }
+        .badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge.locked { background: #fee2e2; color: var(--danger); }
+        .badge.open { background: #dcfce7; color: var(--success); }
+
+        /* Rangliste Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        td { font-size: 0.95rem; }
+        tr.leader { font-weight: 600; color: var(--accent); }
+        .rank-badge {
+            display: inline-flex;
+            width: 28px;
+            height: 28px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #f1f5f9;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        tr:nth-child(1) .rank-badge { background: #fef08a; color: #a16207; }
+
+        /* Utilities */
+        .flex-group { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; }
+        .input-fill { flex: 1; }
+        .text-center { text-align: center; }
+        .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 8px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card" style="padding-bottom: 15px;">
+        <h1>🏆 Tippspiel WM 2026</h1>
+        <p class="subtitle">Verwalte deine Tipps und verfolge die Rangliste live</p>
+        
+        <!-- Tab Navigation (wird nach Login sichtbar) -->
+        <div class="nav-tabs" id="main-nav" style="display: none;">
+            <button class="tab-btn active" onclick="switchTab('tipps-view')">📝 Tipps</button>
+            <button class="tab-btn" onclick="switchTab('tabelle-view')">📊 Tabelle</button>
+            <button class="tab-btn" onclick="switchTab('admin-view')">👥 Spieler</button>
+            <button class="tab-btn" onclick="fetchLiveResults()" style="color: var(--accent);">🔄 Live-Ergebnisse</button>
+        </div>
+    </div>
+
+    <!-- 1. LOGIN VIEW -->
+    <div id="login-view" class="view active">
+        <div class="card login-box">
+            <h3 style="margin-top:0; margin-bottom: 20px;">Tippspiel betreten</h3>
+            <input type="password" id="global-password" placeholder="Zentrales Passwort">
+            <button class="btn" onclick="handleLogin()">Einloggen</button>
+            <p id="login-error" class="error-msg" style="display:none;">⚠️ Falsches Passwort!</p>
+        </div>
+    </div>
+
+    <!-- 2. TIPPS VIEW -->
+    <div id="tipps-view" class="view">
+        <div class="card">
+            <div class="flex-group">
+                <label style="font-weight: 600;">Teilnehmer:</label>
+                <select id="select-player" class="input-fill" onchange="loadPlayerTipps()"></select>
+            </div>
+            
+            <div id="matches-container"></div>
+            
+            <div class="text-center" style="margin-top: 24px;">
+                <button class="btn" onclick="saveTipps()">Tipps permanent speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. TABELLE VIEW -->
+    <div id="tabelle-view" class="view">
+        <div class="card">
+            <h3 style="margin-top: 0;">Aktuelle Rangliste</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Punktesystem: 3 Punkte für das exakte Ergebnis. 1 Punkt für die richtige Tendenz (Sieg/Remis).</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Platz</th>
+                        <th>Name</th>
+                        <th style="text-align: right;">Punkte</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 4. ADMIN VIEW -->
+    <div id="admin-view" class="view">
+        <div class="card">
+            <h3 style="margin-top: 0;">Neuen Mitspieler registrieren</h3>
+            <div class="flex-group">
+                <input type="text" id="new-player-name" class="input-fill" placeholder="Name des Teilnehmers">
+                <button class="btn" onclick="addPlayer()">Hinzufügen</button>
+            </div>
+            
+            <h4 style="margin-bottom: 12px; color: var(--primary);">Registrierte Teilnehmer:</h4>
+            <div id="players-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ZENTRALES PASSWORT
+    const CENTRAL_PASSWORD = "wm2026passwort"; 
+
+    // SPIELDATEN (Fallback und Strukturvorlage)
+    let wm2026Data = {
+        matches: [
+            { id: 1, team1: "USA", team2: "Mexiko", date: "2026-06-11T18:00:00Z", score1: null, score2: null },
+            { id: 2, team1: "Kanada", team2: "Marokko", date: "2026-06-12T20:30:00Z", score1: null, score2: null },
+            { id: 3, team1: "Deutschland", team2: "Argentinien", date: "2026-06-13T15:00:00Z", score1: null, score2: null },
+            { id: 4, team1: "Frankreich", team2: "Japan", date: "2026-07-19T21:00:00Z", score1: null, score2: null }
+        ]
+    };
+
+    let players = JSON.parse(localStorage.getItem('wm_players')) || [];
+    let tipps = JSON.parse(localStorage.getItem('wm_tipps')) || {}; 
+
+    function handleLogin() {
+        const input = document.getElementById('global-password').value;
+        if(input === CENTRAL_PASSWORD) {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('main-nav').style.display = 'flex';
+            switchTab('tipps-view');
+            initApp();
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    function initApp() {
+        updatePlayerDropdowns();
+        renderPlayersList();
+        fetchLiveResults();
+    }
+
+    function switchTab(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(viewId).classList.add('active');
+        // Setze aktiven Tab-Button optisch um
+        const btnIndex = ['tipps-view', 'tabelle-view', 'admin-view'].indexOf(viewId);
+        if(btnIndex !== -1) {
+            document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
+        }
+        
+        if(viewId === 'tabelle-view') calculateLeaderboard();
+    }
+
+    // ERGEBNISSE LADEN
+    async function fetchLiveResults() {
+        try {
+            // Freie Schnittstelle von OpenLigaDB (wird zur WM2026 gefüllt)
+            const response = await fetch('https://api.openligadb.de/getmatchdata/wm/2026');
+            if (!response.ok) throw new Error();
+            const data = await response.json();
+            
+            if(data && data.length > 0) {
+                wm2026Data.matches = data.map((m, idx) => ({
+                    id: m.matchID || idx,
+                    team1: m.team1.teamName,
+                    team2: m.team2.teamName,
+                    date: m.matchDateTimeUTC,
+                    score1: m.matchResults && m.matchResults.length > 0 ? m.matchResults[m.matchResults.length - 1].pointsTeam1 : null,
+                    score2: m.matchResults && m.matchResults.length > 0 ? m.matchResults[m.matchResults.length - 1].pointsTeam2 : null
+                }));
+            }
+        } catch (e) {
+            console.log("Nutze vordefinierte Spieldaten (keine Live-Daten verfügbar).");
+        }
+        renderMatches();
+    }
+
+    // MATCH CARDS GENERIEREN & SPERR-LOGIK (120 MINUTEN PUFFER FÜR ABPFIFF)
+    function renderMatches() {
+        const container = document.getElementById('matches-container');
+        container.innerHTML = "";
+        const now = new Date();
+        const currentPlayer = document.getElementById('select-player').value;
+
+        wm2026Data.matches.forEach(m => {
+            const matchDate = new Date(m.date);
+            
+            // LOGIK: Sperre greift erst 120 Minuten (2 Stunden) nach dem Anstoß (Nach dem Abpfiff)
+            const lockDate = new Date(matchDate.getTime() + (120 * 60 * 1000));
+            const isLocked = now >= lockDate;
+
+            let t1Tipp = "", t2Tipp = "";
+            if(currentPlayer && tipps[currentPlayer] && tipps[currentPlayer][m.id]) {
+                t1Tipp = tipps[currentPlayer][m.id].t1;
+                t2Tipp = tipps[currentPlayer][m.id].t2;
+            }
+
+            const liveScore = (m.score1 !== null) ? `FT [${m.score1}:${m.score2}]` : "Noch offen";
+
+            const card = `
+                <div class="match-card ${isLocked ? 'locked' : ''}">
+                    <div class="team home">${m.team1}</div>
+                    
+                    <div class="match-center">
+                        <div class="match-meta">
+                            ${matchDate.toLocaleDateString('de-DE', {day: '2-digit', month: '2-digit'})} - ${matchDate.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})} Uhr
+                        </div>
+                        <div class="score-inputs">
+                            <input type="number" min="0" id="t1-${m.id}" value="${t1Tipp}" ${isLocked ? 'disabled' : ''}>
+                            <span style="font-weight:bold; color: var(--text-muted);">:</span>
+                            <input type="number" min="0" id="t2-${m.id}" value="${t2Tipp}" ${isLocked ? 'disabled' : ''}>
+                        </div>
+                        <div class="match-meta" style="font-weight: 600;">
+                            ${isLocked ? '<span class="badge locked">🔒 Gesperrt</span>' : '<span class="badge open">✏️ Tippbar</span>'}
+                            <span style="display:block; margin-top:4px; color: var(--accent);">${liveScore}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="team away">${m.team2}</div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', card);
+        });
+    }
+
+    // TIPPS SPEICHERN
+    function saveTipps() {
+        const player = document.getElementById('select-player').value;
+        if(!player) return alert("Bitte wähle zuerst einen Spieler aus!");
+
+        if(!tipps[player]) tipps[player] = {};
+        const now = new Date();
+
+        wm2026Data.matches.forEach(m => {
+            const matchDate = new Date(m.date);
+            const lockDate = new Date(matchDate.getTime() + (120 * 60 * 1000));
+
+            // Speichern nur erlauben, wenn das Spiel noch nicht vorbei (120 Min nach Anstoß) ist
+            if(now < lockDate) {
+                const t1 = document.getElementById(`t1-${m.id}`).value;
+                const t2 = document.getElementById(`t2-${m.id}`).value;
+                if(t1 !== "" && t2 !== "") {
+                    tipps[player][m.id] = { t1: parseInt(t1), t2: parseInt(t2) };
+                }
+            }
+        });
+
+        localStorage.setItem('wm_tipps', JSON.stringify(tipps));
+        alert("Deine Tipps wurden erfolgreich gesichert!");
+        calculateLeaderboard();
+    }
+
+    function loadPlayerTipps() {
+        renderMatches();
+    }
+
+    // ADMIN/TEILNEHMER-LOGIK
+    function addPlayer() {
+        const input = document.getElementById('new-player-name');
+        const name = input.value.trim();
+        if(name && !players.includes(name)) {
+            players.push(name);
+            localStorage.setItem('wm_players', JSON.stringify(players));
+            input.value = "";
+            updatePlayerDropdowns();
+            renderPlayersList();
+        }
+    }
+
+    function updatePlayerDropdowns() {
+        const select = document.getElementById('select-player');
+        const active = select.value;
+        select.innerHTML = players.map(p => `<option value="${p}">${p}</option>`).join('');
+        if(active && players.includes(active)) select.value = active;
+        else if (players.length > 0) select.value = players[0];
+        renderMatches();
+    }
+
+    function renderPlayersList() {
+        const wrapper = document.getElementById('players-list');
+        wrapper.innerHTML = players.map(p => `
+            <span style="background: #e2e8f0; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">${p}</span>
+        `).join('');
+    }
+
+    // AUSWERTUNG / TABELLE
+    function calculateLeaderboard() {
+        let scores = {};
+        players.forEach(p => scores[p] = 0);
+
+        wm2026Data.matches.forEach(m => {
+            if(m.score1 !== null && m.score2 !== null) {
+                const r1 = m.score1;
+                const r2 = m.score2;
+
+                players.forEach(p => {
+                    if(tipps[p] && tipps[p][m.id]) {
+                        const t1 = tipps[p][m.id].t1;
+                        const t2 = tipps[p][m.id].t2;
+
+                        if(t1 === r1 && t2 === r2) {
+                            scores[p] += 3; // Exakt
+                        } else if ((t1 > t2 && r1 > r2) || (t1 < t2 && r1 < r2) || (t1 === t2 && r1 === r2)) {
+                            scores[p] += 1; // Tendenz
+                        }
+                    }
+                });
+            }
+        });
+
+        let sorted = Object.keys(scores).map(name => ({name: name, points: scores[name]}));
+        sorted.sort((a, b) => b.points - a.points);
+
+        const tbody = document.getElementById('leaderboard-tbody');
+        tbody.innerHTML = sorted.map((p, idx) => `
+            <tr class="${idx === 0 && p.points > 0 ? 'leader' : ''}">
+                <td><span class="rank-badge">${idx + 1}</span></td>
+                <td>${p.name}</td>
+                <td style="text-align: right; font-weight: bold;">${p.points} Pkt.</td>
+            </tr>
+        `).join('');
+    }
+</script>
+</body>
+</html>
