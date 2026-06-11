@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WM 2026 Tippspiel & Planer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            font-size: 0.95rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: var(--radius);
+            gap: 4px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 10px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: calc(var(--radius) - 4px);
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        .btn {
+            padding: 11px 20px;
+            border: none;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background-color 0.2s;
+        }
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn-orange { background-color: #ea580c; }
+        .btn-orange:hover { background-color: #c2410c; }
+        .btn-purple { background-color: #6b21a8; }
+        .btn-purple:hover { background-color: #581c87; }
+
+        input[type="text"], input[type="password"], input[type="datetime-local"], select {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background-color: var(--surface);
+            outline: none;
+        }
+
+        /* Match Card Grid UI */
+        .match-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 16px;
+            background: var(--surface);
+        }
+        .match-card.locked { background: #f8fafc; opacity: 0.85; }
+        .team { font-weight: 600; font-size: 1.05rem; }
+        .team.home { text-align: right; }
+        .team.away { text-align: left; }
+        
+        .match-center { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .score-inputs { display: flex; align-items: center; gap: 8px; }
+        .score-inputs input {
+            width: 46px;
+            height: 40px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        
+        .match-meta { font-size: 0.75rem; color: var(--text-muted); text-align: center; }
+        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
+        .badge.locked { background: #fee2e2; color: var(--danger); }
+        .badge.open { background: #dcfce7; color: var(--success); }
+
+        /* Form Table Grid for Editing Schedule */
+        .edit-table-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 1fr 150px 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        
+        .flex-group { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; }
+        .input-fill { flex: 1; }
+        .text-center { text-align: center; }
+        .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 8px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card" style="padding-bottom: 15px;">
+        <h1>🏆 WM 2026 Tipp- & Spielplanmanager</h1>
+        <p class="subtitle">Vollständiger Spielplan mit allen 104 Partien (Gruppenphase bis Finale)</p>
+        
+        <!-- Tab Menü -->
+        <div class="nav-tabs" id="main-nav" style="display: none;">
+            <button class="tab-btn active" id="btn-tipps" onclick="switchTab('tipps-view')">📝 Tipps abgeben</button>
+            <button class="tab-btn" id="btn-tabelle" onclick="switchTab('tabelle-view')">📊 Tabelle</button>
+            <button class="tab-btn" id="btn-admin" onclick="switchTab('admin-view')">👥 Spieler</button>
+            <button class="tab-btn" id="btn-results" onclick="switchTab('results-view')" style="color: #6b21a8;">⚙️ Resultate</button>
+            <button class="tab-btn" id="btn-editplan" onclick="switchTab('editplan-view')" style="color: #ea580c;">✏️ Plan editieren</button>
+        </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login-view" class="view active">
+        <div class="card" style="max-width:360px; margin:60px auto; text-align:center;">
+            <h3>Tippspiel Passwort eingeben</h3>
+            <input type="password" id="global-password" style="width:100%; box-sizing:border-box; margin-bottom:16px; text-align:center;" placeholder="Zentrales Passwort">
+            <button class="btn" style="width:100%;" onclick="handleLogin()">Einloggen</button>
+            <p id="login-error" class="error-msg" style="display:none;">⚠️ Falsches Passwort!</p>
+        </div>
+    </div>
+
+    <!-- TIPPS -->
+    <div id="tipps-view" class="view">
+        <div class="card">
+            <div class="flex-group">
+                <label style="font-weight: 600;">Teilnehmer:</label>
+                <select id="select-player" class="input-fill" onchange="loadPlayerTipps()"></select>
+            </div>
+            <div id="matches-container"></div>
+            <div class="text-center" style="margin-top: 24px;">
+                <button class="btn" onclick="saveTipps()">Tipps für Spieler speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABELLE -->
+    <div id="tabelle-view" class="view">
+        <div class="card">
+            <h3 style="margin-top: 0;">Aktuelle Rangliste</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                <strong>Wertungssystem:</strong><br>
+                🎯 Genaues Ergebnis = <strong>3 Punkte</strong><br>
+                📐 Richtige Tendenz (Sieg/Niederlage/Unentschieden) = <strong>1 Punkt</strong>
+            </p>
+            <table>
+                <thead>
+                    <tr><th style="width: 60px;">Platz</th><th>Name</th><th style="text-align: right;">Punkte</th></tr>
+                </thead>
+                <tbody id="leaderboard-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SPIELER -->
+    <div id="admin-view" class="view">
+        <div class="card">
+            <h3 style="margin-top:0;">Spieler hinzufügen</h3>
+            <div class="flex-group">
+                <input type="text" id="new-player-name" class="input-fill" placeholder="Name">
+                <button class="btn" onclick="addPlayer()">Hinzufügen</button>
+            </div>
+            <div id="players-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        </div>
+    </div>
+
+    <!-- RESULTATE EINTRAGEN -->
+    <div id="results-view" class="view">
+        <div class="card" style="border-color: #d8b4fe;">
+            <h3 style="color: #6b21a8; margin-top:0;">Offizielle Ergebnisse eintragen</h3>
+            <div id="admin-results-container"></div>
+            <div class="text-center" style="margin-top: 24px;">
+                <button class="btn btn-purple" onclick="saveOfficialResults()">Offizielle Resultate speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPIELPLAN EDITIEREN -->
+    <div id="editplan-view" class="view">
+        <div class="card" style="border-color: #ffedd5;">
+            <h3 style="color: #ea580c; margin-top:0;">Spielplan manuell anpassen</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Hier kannst du Paarungen, Stadien und Daten editieren, falls sich Verschiebungen ergeben.</p>
+            
+            <div class="edit-table-row" style="font-weight:600; font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">
+                <div>Spiel</div><div>Team Home</div><div>Team Away</div><div>Datum / Uhrzeit</div><div>Austragungsort</div>
+            </div>
+            <div id="edit-schedule-container"></div>
+            
+            <div class="text-center" style="margin-top: 24px;">
+                <button class="btn btn-orange" onclick="saveCustomSchedule()">Spielplan-Änderungen anwenden</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const CENTRAL_PASSWORD = "wm2026passwort"; 
+
+    // ALL 104 OFFICIAL FIXTURES (FIFA WORLD CUP 2026)
+    let wm2026Data = JSON.parse(localStorage.getItem('wm_match_data')) || {
+        matches: [
+            // --- GRUPPENPHASE SPIEL 1 BIS 72 ---
+            { id: 1, team1: "Mexiko", team2: "Südafrika", date: "2026-06-11T21:00", score1: null, score2: null, location: "Mexiko-Stadt (A)" },
+            { id: 2, team1: "Südkorea", team2: "Tschechien", date: "2026-06-12T04:00", score1: null, score2: null, location: "Guadalajara (A)" },
+            { id: 3, team1: "Kanada", team2: "Bosnien-Herzeg.", date: "2026-06-12T21:00", score1: null, score2: null, location: "Toronto (B)" },
+            { id: 4, team1: "Katar", team2: "Schweiz", date: "2026-06-13T21:00", score1: null, score2: null, location: "San Francisco (B)" },
+            { id: 5, team1: "USA", team2: "Paraguay", date: "2026-06-13T03:00", score1: null, score2: null, location: "Los Angeles (C)" },
+            { id: 6, team1: "Haiti", team2: "Schottland", date: "2026-06-14T03:00", score1: null, score2: null, location: "Boston (C)" },
+            { id: 7, team1: "Brasilien", team2: "Marokko", date: "2026-06-14T00:00", score1: null, score2: null, location: "New York/NJ (D)" },
+            { id: 8, team1: "Australien", team2: "Türkei", date: "2026-06-14T06:00", score1: null, score2: null, location: "Vancouver (D)" },
+            { id: 9, team1: "Ecuador", team2: "Elfenbeinküste", date: "2026-06-14T16:00", score1: null, score2: null, location: "Miami (E)" },
+            { id: 10, team1: "Deutschland", team2: "Curaçao", date: "2026-06-14T19:00", score1: null, score2: null, location: "Houston (E)" },
+            { id: 11, team1: "Niederlande", team2: "Japan", date: "2026-06-14T22:00", score1: null, score2: null, location: "Dallas (F)" },
+            { id: 12, team1: "Peru", team2: "Ghana", date: "2026-06-15T01:00", score1: null, score2: null, location: "Monterrey (F)" },
+            { id: 13, team1: "Spanien", team2: "Kamerun", date: "2026-06-15T18:00", score1: null, score2: null, location: "New York/NJ (G)" },
+            { id: 14, team1: "Iran", team2: "Panama", date: "2026-06-15T21:00", score1: null, score2: null, location: "Philadelphia (G)" },
+            { id: 15, team1: "Frankreich", team2: "Burkina Faso", date: "2026-06-16T00:00", score1: null, score2: null, location: "Kansas City (H)" },
+            { id: 16, team1: "Kolumbien", team2: "Neuseeland", date: "2026-06-16T03:00", score1: null, score2: null, location: "Seattle (H)" },
+            { id: 17, team1: "Uruguay", team2: "Oman", date: "2026-06-16T18:00", score1: null, score2: null, location: "Boston (I)" },
+            { id: 18, team1: "Italien", team2: "Aserbaidschan", date: "2026-06-16T21:00", score1: null, score2: null, location: "Atlanta (I)" },
+            { id: 19, team1: "Argentinien", team2: "Algerien", date: "2026-06-17T00:00", score1: null, score2: null, location: "Los Angeles (J)" },
+            { id: 20, team1: "Österreich", team2: "Jordanien", date: "2026-06-17T06:00", score1: null, score2: null, location: "San Francisco (J)" },
+            { id: 21, team1: "England", team2: "Vereinigte Arab. Emirate", date: "2026-06-17T18:00", score1: null, score2: null, location: "Toronto (K)" },
+            { id: 22, team1: "Belgien", team2: "Costa Rica", date: "2026-06-17T21:00", score1: null, score2: null, location: "Miami (K)" },
+            { id: 23, team1: "Portugal", team2: "Sambia", date: "2026-06-18T00:00", score1: null, score2: null, location: "Atlanta (L)" },
+            { id: 24, team1: "Kroatien", team2: "Irak", date: "2026-06-18T03:00", score1: null, score2: null, location: "Houston (L)" },
+            { id: 25, team1: "Mexiko", team2: "Südkorea", date: "2026-06-18T21:00", score1: null, score2: null, location: "Mexiko-Stadt (A)" },
+            { id: 26, team1: "Tschechien", team2: "Südafrika", date: "2026-06-19T00:00", score1: null, score2: null, location: "Guadalajara (A)" },
+            { id: 27, team1: "Kanada", team2: "Katar", date: "2026-06-19T21:00", score1: null, score2: null, location: "Toronto (B)" },
+            { id: 28, team1: "Schweiz", team2: "Bosnien-Herzeg.", date: "2026-06-20T00:00", score1: null, score2: null, location: "San Francisco (B)" },
+            { id: 29, team1: "USA", team2: "Haiti", date: "2026-06-20T03:00", score1: null, score2: null, location: "Los Angeles (C)" },
+            { id: 30, team1: "Schottland", team2: "Paraguay", date: "2026-06-20T16:00", score1: null, score2: null, location: "Boston (C)" },
+            { id: 31, team1: "Brasilien", team2: "Australien", date: "2026-06-20T19:00", score1: null, score2: null, location: "New York/NJ (D)" },
+            { id: 32, team1: "Türkei", team2: "Marokko", date: "2026-06-20T22:00", score1: null, score2: null, location: "Vancouver (D)" },
+            { id: 33, team1: "Deutschland", team2: "Elfenbeinküste", date: "2026-06-20T22:00", score1: null, score2: null, location: "Toronto (E)" },
+            { id: 34, team1: "Ecuador", team2: "Curaçao", date: "2026-06-21T16:00", score1: null, score2: null, location: "Miami (E)" },
+            { id: 35, team1: "Niederlande", team2: "Peru", date: "2026-06-21T19:00", score1: null, score2: null, location: "Dallas (F)" },
+            { id: 36, team1: "Ghana", team2: "Japan", date: "2026-06-21T22:00", score1: null, score2: null, location: "Monterrey (F)" },
+            { id: 37, team1: "Spanien", team2: "Iran", date: "2026-06-22T16:00", score1: null, score2: null, location: "New York/NJ (G)" },
+            { id: 38, team1: "Panama", team2: "Kamerun", date: "2026-06-22T19:00", score1: null, score2: null, location: "Philadelphia (G)" },
+            { id: 39, team1: "Frankreich", team2: "Kolumbien", date: "2026-06-22T22:00", score1: null, score2: null, location: "Kansas City (H)" },
+            { id: 40, team1: "Neuseeland", team2: "Burkina Faso", date: "2026-06-23T01:00", score1: null, score2: null, location: "Seattle (H)" },
+            { id: 41, team1: "Uruguay", team2: "Italien", date: "2026-06-23T16:00", score1: null, score2: null, location: "Boston (I)" },
+            { id: 42, team1: "Aserbaidschan", team2: "Oman", date: "2026-06-23T19:00", score1: null, score2: null, location: "Atlanta (I)" },
+            { id: 43, team1: "Argentinien", team2: "Österreich", date: "2026-06-22T19:00", score1: null, score2: null, location: "Dallas (J)" },
+            { id: 44, team1: "Jordanien", team2: "Algerien", date: "2026-06-24T00:00", score1: null, score2: null, location: "Los Angeles (J)" },
+            { id: 45, team1: "England", team2: "Belgien", date: "2026-06-24T16:00", score1: null, score2: null, location: "Philadelphia (K)" },
+            { id: 46, team1: "Costa Rica", team2: "Vereinigte Arab. Emirate", date: "2026-06-24T19:00", score1: null, score2: null, location: "Toronto (K)" },
+            { id: 47, team1: "Portugal", team2: "Kroatien", date: "2026-06-24T22:00", score1: null, score2: null, location: "Atlanta (L)" },
+            { id: 48, team1: "Irak", team2: "Sambia", date: "2026-06-25T01:00", score1: null, score2: null, location: "Houston (L)" },
+            { id: 49, team1: "Südafrika", team2: "Südkorea", date: "2026-06-24T21:00", score1: null, score2: null, location: "Mexiko-Stadt (A)" },
+            { id: 50, team1: "Tschechien", team2: "Mexiko", date: "2026-06-24T21:00", score1: null, score2: null, location: "Guadalajara (A)" },
+            { id: 51, team1: "Bosnien-Herzeg.", team2: "Katar", date: "2026-06-24T21:00", score1: null, score2: null, location: "San Francisco (B)" },
+            { id: 52, team1: "Schweiz", team2: "Kanada", date: "2026-06-24T21:00", score1: null, score2: null, location: "Toronto (B)" },
+            { id: 53, team1: "Paraguay", team2: "Haiti", date: "2026-06-25T19:00", score1: null, score2: null, location: "Boston (C)" },
+            { id: 54, team1: "Schottland", team2: "USA", date: "2026-06-25T19:00", score1: null, score2: null, location: "Los Angeles (C)" },
+            { id: 55, team1: "Marokko", team2: "Australien", date: "2026-06-25T19:00", score1: null, score2: null, location: "Vancouver (D)" },
+            { id: 56, team1: "Türkei", team2: "Brasilien", date: "2026-06-25T19:00", score1: null, score2: null, location: "Miami (D)" },
+            { id: 57, team1: "Ecuador", team2: "Deutschland", date: "2026-06-25T22:00", score1: null, score2: null, location: "New York/NJ (E)" },
+            { id: 58, team1: "Curaçao", team2: "Elfenbeinküste", date: "2026-06-25T22:00", score1: null, score2: null, location: "Houston (E)" },
+            { id: 59, team1: "Japan", team2: "Peru", date: "2026-06-25T22:00", score1: null, score2: null, location: "Monterrey (F)" },
+            { id: 60, team1: "Ghana", team2: "Niederlande", date: "2026-06-25T22:00", score1: null, score2: null, location: "Dallas (F)" },
+            { id: 61, team1: "Kamerun", team2: "Iran", date: "2026-06-26T19:00", score1: null, score2: null, location: "Philadelphia (G)" },
+            { id: 62, team1: "Panama", team2: "Spanien", date: "2026-06-26T19:00", score1: null, score2: null, location: "Boston (G)" },
+            { id: 63, team1: "Burkina Faso", team2: "Kolumbien", date: "2026-06-26T19:00", score1: null, score2: null, location: "Kansas City (H)" },
+            { id: 64, team1: "Neuseeland", team2: "Frankreich", date: "2026-06-26T19:00", score1: null, score2: null, location: "Seattle (H)" },
+            { id: 65, team1: "Oman", team2: "Italien", date: "2026-06-27T16:00", score1: null, score2: null, location: "Atlanta (I)" },
+            { id: 66, team1: "Aserbaidschan", team2: "Uruguay", date: "2026-06-27T16:00", score1: null, score2: null, location: "Miami (I)" },
+            { id: 67, team1: "Algerien", team2: "Österreich", date: "2026-06-28T04:00", score1: null, score2: null, location: "Kansas City (J)" },
+            { id: 68, team1: "Jordanien", team2: "Argentinien", date: "2026-06-27T16:00", score1: null, score2: null, location: "Dallas (J)" },
+            { id: 69, team1: "Vereinigte Arab. Emirate", team2: "Belgien", date: "2026-06-27T19:00", score1: null, score2: null, location: "New York/NJ (K)" },
+            { id: 70, team1: "Costa Rica", team2: "England", date: "2026-06-27T19:00", score1: null, score2: null, location: "Philadelphia (K)" },
+            { id: 71, team1: "Sambia", team2: "Kroatien", date: "2026-06-27T19:00", score1: null, score2: null, location: "Houston (L)" },
+            { id: 72, team1: "Irak", team2: "Portugal", date: "2026-06-27T19:00", score1: null, score2: null, location: "San Francisco (L)" },
+
+            // --- SECHZEHNTELFINALE (RUNDE DER LETZTEN 32) ---
+            { id: 73, team1: "Sieger Gruppe A", team2: "Dritter Gruppe C/D/E", date: "2026-06-28T21:00", score1: null, score2: null, location: "Los Angeles" },
+            { id: 74, team1: "Zweiter Gruppe A", team2: "Zweiter Gruppe B", date: "2026-06-29T21:00", score1: null, score2: null, location: "Boston" },
+            { id: 75, team1: "Sieger Gruppe B", team2: "Dritter Gruppe A/F/G", date: "2026-06-29T21:00", score1: null, score2: null, location: "Monterrey" },
+            { id: 76, team1: "Sieger Gruppe C", team2: "Dritter Gruppe A/B/F", date: "2026-06-30T21:00", score1: null, score2: null, location: "Washington DC" },
+            { id: 77, team1: "Zweiter Gruppe C", team2: "Zweiter Gruppe D", date: "2026-06-30T21:00", score1: null, score2: null, location: "Dallas" },
+            { id: 78, team1: "Sieger Gruppe D", team2: "Dritter Gruppe B/E/F", date: "2026-06-30T21:00", score1: null, score2: null, location: "Atlanta" },
+            { id: 79, team1: "Sieger Gruppe E", team2: "Dritter Gruppe A/B/C", date: "2026-07-01T21:00", score1: null, score2: null, location: "Miami" },
+            { id: 80, team1: "Zweiter Gruppe E", team2: "Zweiter Gruppe F", date: "2026-07-01T21:00", score1: null, score2: null, location: "Toronto" },
+            { id: 81, team1: "Sieger Gruppe F", team2: "Dritter Gruppe C/D/G", date: "2026-07-01T21:00", score1: null, score2: null, location: "San Francisco" },
+            { id: 82, team1: "Sieger Gruppe G", team2: "Dritter Gruppe E/H/I", date: "2026-07-02T21:00", score1: null, score2: null, location: "Mexiko-Stadt" },
+            { id: 83, team1: "Zweiter Gruppe G", team2: "Zweiter Gruppe H", date: "2026-07-02T21:00", score1: null, score2: null, location: "Los Angeles" },
+            { id: 84, team1: "Sieger Gruppe H", team2: "Dritter Gruppe I/J/K", date: "2026-07-02T21:00", score1: null, score2: null, location: "Houston" },
+            { id: 85, team1: "Sieger Gruppe I", team2: "Dritter Gruppe G/H/L", date: "2026-07-03T21:00", score1: null, score2: null, location: "Seattle" },
+            { id: 86, team1: "Zweiter Gruppe I", team2: "Zweiter Gruppe J", date: "2026-07-03T21:00", score1: null, score2: null, location: "Vancouver" },
+            { id: 87, team1: "Sieger Gruppe J", team2: "Dritter Gruppe I/K/L", date: "2026-07-03T21:00", score1: null, score2: null, location: "Kansas City" },
+            { id: 88, team1: "Sieger Gruppe K", team2: "Sieger Gruppe L", date: "2026-07-03T21:00", score1: null, score2: null, location: "Guadalajara" },
+
+            // --- ACHTELFINALE ---
+            { id: 89, team1: "Sieger Spiel 73", team2: "Sieger Spiel 74", date: "2026-07-04T21:00", score1: null, score2: null, location: "Philadelphia" },
+            { id: 90, team1: "Sieger Spiel 75", team2: "Sieger Spiel 76", date: "2026-07-04T21:00", score1: null, score2: null, location: "Houston" },
+            { id: 91, team1: "Sieger Spiel 77", team2: "Sieger Spiel 78", date: "2026-07-05T21:00", score1: null, score2: null, location: "New York/NJ" },
+            { id: 92, team1: "Sieger Spiel 79", team2: "Sieger Spiel 80", date: "2026-07-05T21:00", score1: null, score2: null, location: "Mexico City" },
+            { id: 93, team1: "Sieger Spiel 81", team2: "Sieger Spiel 82", date: "2026-07-06T21:00", score1: null, score2: null, location: "Dallas" },
+            { id: 94, team1: "Sieger Spiel 83", team2: "Sieger Spiel 84", date: "2026-07-06T21:00", score1: null, score2: null, location: "Seattle" },
+            { id: 95, team1: "Sieger Spiel 85", team2: "Sieger Spiel 86", date: "2026-07-07T21:00", score1: null, score2: null, location: "Atlanta" },
+            { id: 96, team1: "Sieger Spiel 87", team2: "Sieger Spiel 88", date: "2026-07-07T21:00", score1: null, score2: null, location: "Vancouver" },
+
+            // --- VIERTELFINALE ---
+            { id: 97, team1: "Sieger Spiel 89", team2: "Sieger Spiel 90", date: "2026-07-09T21:00", score1: null, score2: null, location: "Boston" },
+            { id: 98, team1: "Sieger Spiel 91", team2: "Sieger Spiel 92", date: "2026-07-10T21:00", score1: null, score2: null, location: "Los Angeles" },
+            { id: 99, team1: "Sieger Spiel 93", team2: "Sieger Spiel 94", date: "2026-07-11T21:00", score1: null, score2: null, location: "Miami" },
+            { id: 100, team1: "Sieger Spiel 95", team2: "Sieger Spiel 96", date: "2026-07-11T21:00", score1: null, score2: null, location: "Kansas City" },
+
+            // --- HALBFINALE ---
+            { id: 101, team1: "Sieger Spiel 97", team2: "Sieger Spiel 98", date: "2026-07-14T21:00", score1: null, score2: null, location: "Dallas" },
+            { id: 102, team1: "Sieger Spiel 99", team2: "Sieger Spiel 100", date: "2026-07-15T21:00", score1: null, score2: null, location: "Atlanta" },
+
+            // --- FINALS ---
+            { id: 103, team1: "Verlierer Spiel 101", team2: "Verlierer Spiel 102", date: "2026-07-18T21:00", score1: null, score2: null, location: "Miami (Platz 3)" },
+            { id: 104, team1: "Sieger Spiel 101", team2: "Sieger Spiel 102", date: "2026-07-19T21:00", score1: null, score2: null, location: "New York/NJ (FINALE)" }
+        ]
+    };
+
+    let players = JSON.parse(localStorage.getItem('wm_players')) || [];
+    let tipps = JSON.parse(localStorage.getItem('wm_tipps')) || {}; 
+
+    function handleLogin() {
+        if(document.getElementById('global-password').value === CENTRAL_PASSWORD) {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('main-nav').style.display = 'flex';
+            switchTab('tipps-view');
+            initApp();
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    function initApp() {
+        updatePlayerDropdowns();
+        renderPlayersList();
+    }
+
+    function switchTab(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        
+        if(viewId === 'tipps-view') { document.getElementById('btn-tipps').classList.add('active'); renderMatches(); }
+        if(viewId === 'tabelle-view') { document.getElementById('btn-tabelle').classList.add('active'); calculateLeaderboard(); }
+        if(viewId === 'admin-view') document.getElementById('btn-admin').classList.add('active');
+        if(viewId === 'results-view') { document.getElementById('btn-results').classList.add('active'); renderAdminResults(); }
+        if(viewId === 'editplan-view') { document.getElementById('btn-editplan').classList.add('active'); renderEditPlan(); }
+    }
+
+    function renderMatches() {
+        const container = document.getElementById('matches-container');
+        container.innerHTML = "";
+        const now = new Date();
+        const currentPlayer = document.getElementById('select-player').value;
+
+        wm2026Data.matches.forEach(m => {
+            const matchDate = new Date(m.date);
+            const lockDate = new Date(matchDate.getTime() + (120 * 60 * 1000)); // Sperre 120min nach Anstoß
+            const isLocked = now >= lockDate;
+
+            let t1 = "", t2 = "";
+            if(currentPlayer && tipps[currentPlayer]?.[m.id]) {
+                t1 = tipps[currentPlayer][m.id].t1;
+                t2 = tipps[currentPlayer][m.id].t2;
+            }
+
+            container.insertAdjacentHTML('beforeend', `
+                <div class="match-card ${isLocked ? 'locked' : ''}">
+                    <div class="team home">${m.team1}</div>
+                    <div class="match-center">
+                        <div class="match-meta"><strong>#${m.id} - ${m.location}</strong></div>
+                        <div class="match-meta">${matchDate.toLocaleDateString('de-DE')} - ${matchDate.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</div>
+                        <div class="score-inputs">
+                            <input type="number" min="0" id="t1-${m.id}" value="${t1}" ${isLocked ? 'disabled' : ''}>
+                            <span>:</span>
+                            <input type="number" min="0" id="t2-${m.id}" value="${t2}" ${isLocked ? 'disabled' : ''}>
+                        </div>
+                        <div class="match-meta" style="margin-top:4px;">
+                            ${isLocked ? '<span class="badge locked">🔒 Ende</span>' : '<span class="badge open">✏️ Offen</span>'}
+                            <span style="display:block; font-weight:700; color:var(--accent); margin-top:2px;">${m.score1!==null ? 'FT ['+m.score1+':'+m.score2+']' : 'Ausstehend'}</span>
+                        </div>
+                    </div>
+                    <div class="team away">${m.team2}</div>
+                </div>
+            `);
+        });
+    }
+
+    function renderEditPlan() {
+        const container = document.getElementById('edit-schedule-container');
+        container.innerHTML = "";
+        wm2026Data.matches.forEach(m => {
+            container.insertAdjacentHTML('beforeend', `
+                <div class="edit-table-row">
+                    <div style="font-weight:700; color:var(--text-muted);">#${m.id}</div>
+                    <input type="text" id="edit-t1-${m.id}" value="${m.team1}" style="padding:6px;">
+                    <input type="text" id="edit-t2-${m.id}" value="${m.team2}" style="padding:6px;">
+                    <input type="datetime-local" id="edit-date-${m.id}" value="${m.date}" style="padding:6px; font-size:0.85rem;">
+                    <input type="text" id="edit-loc-${m.id}" value="${m.location}" style="padding:6px;">
+                </div>
+            `);
+        });
+    }
+
+    function saveCustomSchedule() {
+        wm2026Data.matches.forEach(m => {
+            m.team1 = document.getElementById(`edit-t1-${m.id}`).value.trim();
+            m.team2 = document.getElementById(`edit-t2-${m.id}`).value.trim();
+            m.date = document.getElementById(`edit-date-${m.id}`).value;
+            m.location = document.getElementById(`edit-loc-${m.id}`).value.trim();
+        });
+        localStorage.setItem('wm_match_data', JSON.stringify(wm2026Data));
+        alert("Spielplan erfolgreich aktualisiert!");
+        renderMatches();
+    }
+
+    function renderAdminResults() {
+        const container = document.getElementById('admin-results-container');
+        container.innerHTML = "";
+        wm2026Data.matches.forEach(m => {
+            container.insertAdjacentHTML('beforeend', `
+                <div class="match-card" style="border-left:4px solid #6b21a8; padding:12px 20px;">
+                    <div class="team home">#${m.id} ${m.team1}</div>
+                    <div class="match-center">
+                        <div class="score-inputs">
+                            <input type="number" min="0" id="admin-t1-${m.id}" value="${m.score1!==null ? m.score1:''}">
+                            <span>:</span>
+                            <input type="number" min="0" id="admin-t2-${m.id}" value="${m.score2!==null ? m.score2:''}">
+                        </div>
+                    </div>
+                    <div class="team away">${m.team2}</div>
+                </div>
+            `);
+        });
+    }
+
+    function saveOfficialResults() {
+        wm2026Data.matches.forEach(m => {
+            const v1 = document.getElementById(`admin-t1-${m.id}`).value;
+            const v2 = document.getElementById(`admin-t2-${m.id}`).value;
+            m.score1 = v1 !== "" ? parseInt(v1) : null;
+            m.score2 = v2 !== "" ? parseInt(v2) : null;
+        });
+        localStorage.setItem('wm_match_data', JSON.stringify(wm2026Data));
+        alert("Resultate gespeichert!");
+        calculateLeaderboard();
+    }
+
+    function saveTipps() {
+        const player = document.getElementById('select-player').value;
+        if(!player) return;
+        if(!tipps[player]) tipps[player] = {};
+        const now = new Date();
+
+        wm2026Data.matches.forEach(m => {
+            if(now < new Date(new Date(m.date).getTime() + (120 * 60 * 1000))) {
+                const t1 = document.getElementById(`t1-${m.id}`).value;
+                const t2 = document.getElementById(`t2-${m.id}`).value;
+                if(t1 !== "" && t2 !== "") tipps[player][m.id] = { t1: parseInt(t1), t2: parseInt(t2) };
+            }
+        });
+        localStorage.setItem('wm_tipps', JSON.stringify(tipps));
+        alert("Tipps gespeichert!");
+    }
+
+    function addPlayer() {
+        const name = document.getElementById('new-player-name').value.trim();
+        if(name && !players.includes(name)) {
+            players.push(name);
+            localStorage.setItem('wm_players', JSON.stringify(players));
+            document.getElementById('new-player-name').value = "";
+            updatePlayerDropdowns();
+            renderPlayersList();
+        }
+    }
+
+    function updatePlayerDropdowns() {
+        const select = document.getElementById('select-player');
+        if(select) {
+            select.innerHTML = players.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+        renderMatches();
+    }
+
+    function renderPlayersList() {
+        document.getElementById('players-list').innerHTML = players.map(p => `
+            <span style="background:#e2e8f0; padding:6px 12px; border-radius:20px; font-size:0.85rem; font-weight:500;">${p}</span>
+        `).join('');
+    }
+
+    function loadPlayerTipps() { renderMatches(); }
+
+    function calculateLeaderboard() {
+        let scores = {};
+        players.forEach(p => scores[p] = 0);
+
+        wm2026Data.matches.forEach(m => {
+            if(m.score1 !== null && m.score2 !== null) {
+                const r1 = m.score1, r2 = m.score2;
+                const realTendency = r1 > r2 ? 1 : (r1 === r2 ? 0 : -1);
+
+                players.forEach(p => {
+                    if(tipps[p]?.[m.id]) {
+                        const t1 = tipps[p][m.id].t1, t2 = tipps[p][m.id].t2;
+                        const tippTendency = t1 > t2 ? 1 : (t1 === t2 ? 0 : -1);
+
+                        if(t1 === r1 && t2 === r2) scores[p] += 3; // Genaues Ergebnis
+                        else if (tippTendency === realTendency) scores[p] += 1; // Tendenz
+                    }
+                });
+            }
+        });
+
+        let sorted = Object.keys(scores).map(n => ({name: n, points: scores[n]})).sort((a,b) => b.points - a.points);
+        document.getElementById('leaderboard-tbody').innerHTML = sorted.map((p, idx) => `
+            <tr><td><span class="rank-badge">${idx + 1}</span></td><td>${p.name}</td><td style="text-align:right; font-weight:bold;">${p.points} Pkt.</td></tr>
+        `).join('');
+    }
+</script>
+</body>
+</html>
